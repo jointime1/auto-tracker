@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+
+  /* Auto dark mode for cards and inputs */
+  @media (prefers-color-scheme: dark) {
+    .bg-white {
+      background-color: #1f2937 !important;
+    }
+    .bg-gray-50 {
+      background-color: #111827 !important;
+    }
+    .bg-gray-100 {
+      background-color: #1f2937 !important;
+    }
+    .border-gray-100, .border-gray-200 {
+      border-color: #374151 !important;
+    }
+    .text-gray-900 {
+      color: #f3f4f6 !important;
+    }
+    .text-gray-700 {
+      color: #d1d5db !important;
+    }
+    .text-gray-500 {
+      color: #9ca3af !important;
+    }
+    .text-gray-400 {
+      color: #6b7280 !important;
+    }
+    .shadow-sm {
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+    input, select, textarea {
+      background-color: #1f2937 !important;
+      color: #f3f4f6 !important;
+      border-color: #374151 !important;
+    }
+    input::placeholder, textarea::placeholder {
+      color: #6b7280 !important;
+    }
+    .bg-blue-50 {
+      background-color: rgba(37, 99, 235, 0.1) !important;
+    }
+    .bg-orange-50 {
+      background-color: rgba(249, 115, 22, 0.1) !important;
+    }
+    .bg-teal-50 {
+      background-color: rgba(20, 184, 166, 0.1) !important;
+    }
+    .bg-amber-50 {
+      background-color: rgba(245, 158, 11, 0.1) !important;
+    }
+    .bg-red-50 {
+      background-color: rgba(239, 68, 68, 0.1) !important;
+    }
+  }
+}
