@@ -180,6 +180,27 @@ const fuelStats = computed(() => {
   return { totalLiters, totalCost, avgPrice }
 })
 
+// Expense forecast — predict next month based on averages
+const forecast = computed(() => {
+  const months = monthlyData.value.filter(m => m.fuel + m.service + m.expense > 0)
+  if (months.length < 2) return null
+  const avgFuel = months.reduce((s, m) => s + m.fuel, 0) / months.length
+  const avgService = months.reduce((s, m) => s + m.service, 0) / months.length
+  const avgExpense = months.reduce((s, m) => s + m.expense, 0) / months.length
+  // Trend: compare last 2 months to overall average
+  const last2 = months.slice(-2)
+  const recentTotal = last2.reduce((s, m) => s + m.fuel + m.service + m.expense, 0) / last2.length
+  const overallAvg = avgFuel + avgService + avgExpense
+  const trend = overallAvg > 0 ? ((recentTotal - overallAvg) / overallAvg) * 100 : 0
+  return {
+    fuel: Math.round(avgFuel),
+    service: Math.round(avgService),
+    expense: Math.round(avgExpense),
+    total: Math.round(avgFuel + avgService + avgExpense),
+    trend: Math.round(trend),
+  }
+})
+
 function formatMoney(n: number) {
   return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
@@ -233,6 +254,37 @@ const lineOptions = {
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
         <div class="text-xs text-gray-500 mb-1">Ср. цена топлива</div>
         <div class="text-lg font-bold text-orange-600">{{ fuelStats ? fuelStats.avgPrice.toFixed(2) + ' ₽/л' : '—' }}</div>
+      </div>
+    </div>
+
+    <!-- Expense forecast -->
+    <div v-if="forecast" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-5 border border-purple-100 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-gray-900">Прогноз на следующий месяц</h3>
+        <span v-if="forecast.trend > 5" class="text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-full">
+          Тренд +{{ forecast.trend }}%
+        </span>
+        <span v-else-if="forecast.trend < -5" class="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
+          Тренд {{ forecast.trend }}%
+        </span>
+      </div>
+      <div class="grid grid-cols-4 gap-3 text-center">
+        <div>
+          <div class="text-lg font-bold text-purple-700">{{ formatMoney(forecast.total) }} ₽</div>
+          <div class="text-xs text-gray-500">Всего</div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold text-orange-600">{{ formatMoney(forecast.fuel) }} ₽</div>
+          <div class="text-xs text-gray-500">Топливо</div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold text-teal-600">{{ formatMoney(forecast.service) }} ₽</div>
+          <div class="text-xs text-gray-500">ТО</div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold text-blue-600">{{ formatMoney(forecast.expense) }} ₽</div>
+          <div class="text-xs text-gray-500">Прочее</div>
+        </div>
       </div>
     </div>
 

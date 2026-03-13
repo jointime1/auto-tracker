@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCarsStore } from '../stores/cars'
-import { SERVICE_TYPES, type ServiceType } from '../types'
+import { SERVICE_TYPES, SERVICE_INTERVALS, SERVICE_TEMPLATES, type ServiceType } from '../types'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -18,6 +18,38 @@ const mileage = ref(car.value?.mileage.toString() ?? '')
 const notes = ref('')
 const nextMileage = ref('')
 const error = ref('')
+const showTemplates = ref(true)
+
+// Auto-suggest nextMileage when type changes
+watch(type, (newType) => {
+  const interval = SERVICE_INTERVALS[newType]
+  const m = parseInt(mileage.value) || car.value?.mileage || 0
+  if (interval && m > 0) {
+    nextMileage.value = (m + interval).toString()
+  }
+})
+
+// Also update when mileage changes
+watch(mileage, (val) => {
+  const interval = SERVICE_INTERVALS[type.value]
+  const m = parseInt(val) || 0
+  if (interval && m > 0) {
+    nextMileage.value = (m + interval).toString()
+  }
+})
+
+function applyTemplate(tmpl: typeof SERVICE_TEMPLATES[number]) {
+  type.value = tmpl.type
+  title.value = tmpl.title
+  cost.value = tmpl.estimatedCost.toString()
+  showTemplates.value = false
+  // Trigger nextMileage calculation
+  const interval = SERVICE_INTERVALS[tmpl.type]
+  const m = parseInt(mileage.value) || car.value?.mileage || 0
+  if (interval && m > 0) {
+    nextMileage.value = (m + interval).toString()
+  }
+}
 
 function save() {
   error.value = ''
@@ -36,7 +68,7 @@ function save() {
     type: type.value,
     title: title.value.trim(),
     cost: parseFloat(cost.value),
-    mileage: parseInt(mileage.value),
+    mileage: m,
     notes: notes.value.trim() || undefined,
     nextMileage: nextMileage.value ? parseInt(nextMileage.value) : undefined,
   })
@@ -46,7 +78,7 @@ function save() {
 
 <template>
   <div class="max-w-lg mx-auto px-4 py-8">
-    <div class="flex items-center gap-3 mb-8">
+    <div class="flex items-center gap-3 mb-6">
       <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
@@ -55,7 +87,35 @@ function save() {
       <h1 class="text-2xl font-bold text-gray-900">Обслуживание</h1>
     </div>
 
-    <form @submit.prevent="save" class="space-y-4">
+    <!-- Templates -->
+    <div v-if="showTemplates" class="mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Быстрый выбор</h3>
+        <button @click="showTemplates = false" class="text-xs text-blue-600 hover:text-blue-800">
+          Заполнить вручную
+        </button>
+      </div>
+      <div class="grid grid-cols-1 gap-2">
+        <button v-for="tmpl in SERVICE_TEMPLATES" :key="tmpl.title"
+          @click="applyTemplate(tmpl)"
+          class="text-left bg-white rounded-xl p-3 border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition flex items-center gap-3">
+          <div class="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-sm">🔧</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-gray-900 truncate">{{ tmpl.title }}</div>
+            <div class="text-xs text-gray-500">{{ SERVICE_TYPES[tmpl.type] }} · ~{{ tmpl.estimatedCost.toLocaleString('ru-RU') }} ₽</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form @submit.prevent="save" class="space-y-4" :class="showTemplates && 'opacity-50 pointer-events-none'">
+      <div v-if="!showTemplates">
+        <button type="button" @click="showTemplates = true" class="text-xs text-blue-600 hover:text-blue-800 mb-3">
+          ← Показать шаблоны
+        </button>
+      </div>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
         <input v-model="date" type="date" :max="today"
@@ -89,7 +149,12 @@ function save() {
         </div>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Следующее ТО на пробеге (км)</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Следующее ТО на пробеге (км)
+          <span v-if="SERVICE_INTERVALS[type]" class="text-gray-400 font-normal">
+            · авто: +{{ SERVICE_INTERVALS[type]!.toLocaleString('ru-RU') }} км
+          </span>
+        </label>
         <input v-model="nextMileage" type="number" min="0" placeholder="Необязательно"
           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
       </div>

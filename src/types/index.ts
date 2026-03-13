@@ -76,6 +76,36 @@ export const EXPENSE_CATEGORIES: Record<ExpenseCategory, string> = {
   other: 'Другое',
 }
 
+// Auto-calculated intervals for nextMileage suggestion
+export const SERVICE_INTERVALS: Partial<Record<ServiceType, number>> = {
+  oil_change: 10000,
+  tire: 40000,
+  brake: 30000,
+  filter: 15000,
+  inspection: 20000,
+}
+
+export interface ServiceTemplate {
+  type: ServiceType
+  title: string
+  estimatedCost: number
+}
+
+export const SERVICE_TEMPLATES: ServiceTemplate[] = [
+  { type: 'oil_change', title: 'Замена масла + масляный фильтр', estimatedCost: 5000 },
+  { type: 'oil_change', title: 'Замена масла + все фильтры', estimatedCost: 8000 },
+  { type: 'tire', title: 'Сезонная замена шин (шиномонтаж)', estimatedCost: 3000 },
+  { type: 'tire', title: 'Покупка + установка новых шин', estimatedCost: 25000 },
+  { type: 'brake', title: 'Замена тормозных колодок (перед)', estimatedCost: 4000 },
+  { type: 'brake', title: 'Замена тормозных дисков + колодки', estimatedCost: 12000 },
+  { type: 'filter', title: 'Замена воздушного фильтра', estimatedCost: 1500 },
+  { type: 'filter', title: 'Замена салонного фильтра', estimatedCost: 1200 },
+  { type: 'inspection', title: 'Диагностика ходовой', estimatedCost: 3000 },
+  { type: 'inspection', title: 'Компьютерная диагностика', estimatedCost: 2000 },
+  { type: 'other', title: 'Замена аккумулятора', estimatedCost: 7000 },
+  { type: 'other', title: 'Замена свечей зажигания', estimatedCost: 3000 },
+]
+
 export const SERVICE_COLORS: Record<ServiceType, string> = {
   oil_change: '#FF8F00',
   tire: '#5C6BC0',

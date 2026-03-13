@@ -126,6 +126,16 @@ export const useCarsStore = defineStore('cars', () => {
     )
   }
 
+  // Last fuel record (for quick refuel)
+  function getLastFuelRecord(carId: string) {
+    return computed(() => {
+      const records = fuelRecords.value
+        .filter(r => r.carId === carId)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      return records[0] ?? null
+    })
+  }
+
   // Reminders
   function addReminder(reminder: Reminder) {
     reminders.value.push(reminder)
@@ -189,6 +199,7 @@ export const useCarsStore = defineStore('cars', () => {
     addFuelRecord,
     deleteFuelRecord,
     getFuelRecords,
+    getLastFuelRecord,
     addServiceRecord,
     deleteServiceRecord,
     getServiceRecords,
