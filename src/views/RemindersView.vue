@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCarsStore } from '../stores/cars'
 import { SERVICE_TYPES } from '../types'
+import { formatDate } from '../utils'
 import type { Reminder } from '../types'
 
 const props = defineProps<{ id: string }>()
@@ -32,7 +33,8 @@ const serviceReminders = computed(() => {
       const urgent = remaining <= 1000
       const overdue = remaining <= 0
       return {
-        id: `svc-${s.id}`,
+        id: s.id,
+        serviceRecordId: s.id,
         title: `${SERVICE_TYPES[s.type]} — ${s.title}`,
         subtitle: overdue
           ? `Просрочено на ${Math.abs(remaining).toLocaleString('ru-RU')} км`
@@ -75,11 +77,6 @@ const urgentCount = computed(() =>
   dateReminders.value.filter(r => r.urgent || r.overdue).length
 )
 
-function formatDate(d: string) {
-  const [y, m, day] = d.split('-')
-  return `${day}.${m}.${y}`
-}
-
 function save() {
   if (!formTitle.value.trim() || !formDate.value) return
 
@@ -98,6 +95,13 @@ function save() {
   formDate.value = ''
   formMileage.value = ''
   formNotes.value = ''
+}
+
+function dismissServiceReminder(serviceRecordId: string) {
+  const record = serviceRecords.value.find(r => r.id === serviceRecordId)
+  if (!record) return
+  if (!confirm('Убрать напоминание о следующем ТО?')) return
+  store.updateServiceRecord({ ...record, nextMileage: undefined })
 }
 
 function confirmDelete(name: string, id: string) {
@@ -195,6 +199,11 @@ const reminderTypes = [
               {{ r.subtitle }}
             </div>
           </div>
+          <button @click="dismissServiceReminder(r.serviceRecordId)" class="text-red-400 hover:text-red-600 shrink-0" title="Убрать">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

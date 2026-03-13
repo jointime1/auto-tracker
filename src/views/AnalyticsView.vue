@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCarsStore } from '../stores/cars'
 import { SERVICE_TYPES, EXPENSE_CATEGORIES, SERVICE_COLORS, EXPENSE_COLORS } from '../types'
+import { formatMoney } from '../utils'
 import { Pie, Bar, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS, ArcElement, BarElement, LineElement, PointElement,
@@ -165,10 +166,17 @@ const avgMonthlySpend = computed(() => {
   return total / months.length
 })
 
-// Cost per km
+// Cost per km — based on tracked distance, not total odometer
 const costPerKm = computed(() => {
-  if (!car.value || car.value.mileage <= 0) return null
-  return costBreakdown.value.total / car.value.mileage
+  if (!car.value || costBreakdown.value.total <= 0) return null
+  const allMileages = [
+    ...fuelRecords.value.map(r => r.mileage),
+    ...serviceRecords.value.map(r => r.mileage),
+  ]
+  if (allMileages.length < 2) return null
+  const distance = Math.max(...allMileages) - Math.min(...allMileages)
+  if (distance <= 0) return null
+  return costBreakdown.value.total / distance
 })
 
 // Fuel stats
@@ -200,10 +208,6 @@ const forecast = computed(() => {
     trend: Math.round(trend),
   }
 })
-
-function formatMoney(n: number) {
-  return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-}
 
 const barOptions = {
   responsive: true,

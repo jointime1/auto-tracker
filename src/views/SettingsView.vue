@@ -28,6 +28,10 @@ function triggerImport() {
     const file = (e.target as HTMLInputElement).files?.[0]
     if (!file) return
 
+    if (store.cars.length > 0) {
+      if (!confirm('Импорт заменит все текущие данные. Продолжить?')) return
+    }
+
     const text = await file.text()
     importResult.value = store.importData(text)
   }

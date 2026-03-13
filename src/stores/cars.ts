@@ -2,6 +2,12 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Car, FuelRecord, ServiceRecord, Expense, Reminder } from '../types'
 
+const storageError = ref('')
+
+export function useStorageError() {
+  return storageError
+}
+
 function loadFromStorage<T>(key: string): T[] {
   try {
     const data = localStorage.getItem(key)
@@ -14,7 +20,9 @@ function loadFromStorage<T>(key: string): T[] {
 function saveToStorage<T>(key: string, data: T[]) {
   try {
     localStorage.setItem(key, JSON.stringify(data))
+    storageError.value = ''
   } catch (e) {
+    storageError.value = 'Ошибка сохранения данных. Хранилище переполнено.'
     console.error('Failed to save to localStorage:', e)
   }
 }
@@ -57,6 +65,14 @@ export const useCarsStore = defineStore('cars', () => {
     persist()
   }
 
+  function updateCarMileage(id: string, mileage: number) {
+    const car = cars.value.find(c => c.id === id)
+    if (car && mileage > car.mileage) {
+      car.mileage = mileage
+      persist()
+    }
+  }
+
   function getCarById(id: string) {
     return computed(() => cars.value.find(c => c.id === id))
   }
@@ -69,6 +85,16 @@ export const useCarsStore = defineStore('cars', () => {
       car.mileage = record.mileage
     }
     persist()
+  }
+
+  function updateFuelRecord(record: FuelRecord) {
+    const idx = fuelRecords.value.findIndex(r => r.id === record.id)
+    if (idx !== -1) {
+      fuelRecords.value[idx] = record
+      const car = cars.value.find(c => c.id === record.carId)
+      if (car && record.mileage > car.mileage) car.mileage = record.mileage
+      persist()
+    }
   }
 
   function deleteFuelRecord(id: string) {
@@ -94,6 +120,16 @@ export const useCarsStore = defineStore('cars', () => {
     persist()
   }
 
+  function updateServiceRecord(record: ServiceRecord) {
+    const idx = serviceRecords.value.findIndex(r => r.id === record.id)
+    if (idx !== -1) {
+      serviceRecords.value[idx] = record
+      const car = cars.value.find(c => c.id === record.carId)
+      if (car && record.mileage > car.mileage) car.mileage = record.mileage
+      persist()
+    }
+  }
+
   function deleteServiceRecord(id: string) {
     serviceRecords.value = serviceRecords.value.filter(r => r.id !== id)
     persist()
@@ -111,6 +147,14 @@ export const useCarsStore = defineStore('cars', () => {
   function addExpense(expense: Expense) {
     expenses.value.push(expense)
     persist()
+  }
+
+  function updateExpense(expense: Expense) {
+    const idx = expenses.value.findIndex(r => r.id === expense.id)
+    if (idx !== -1) {
+      expenses.value[idx] = expense
+      persist()
+    }
   }
 
   function deleteExpense(id: string) {
@@ -194,16 +238,20 @@ export const useCarsStore = defineStore('cars', () => {
     reminders,
     addCar,
     updateCar,
+    updateCarMileage,
     deleteCar,
     getCarById,
     addFuelRecord,
+    updateFuelRecord,
     deleteFuelRecord,
     getFuelRecords,
     getLastFuelRecord,
     addServiceRecord,
+    updateServiceRecord,
     deleteServiceRecord,
     getServiceRecords,
     addExpense,
+    updateExpense,
     deleteExpense,
     getExpenses,
     addReminder,
