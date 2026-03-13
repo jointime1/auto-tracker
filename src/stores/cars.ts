@@ -214,11 +214,39 @@ export const useCarsStore = defineStore('cars', () => {
 
   function importData(json: string): { success: boolean; message: string } {
     try {
+      if (json.length > 10 * 1024 * 1024) {
+        return { success: false, message: 'Файл слишком большой (макс. 10 МБ)' }
+      }
       const data = JSON.parse(json)
-      if (!data.version || !data.cars) {
+      if (!data.version || !Array.isArray(data.cars)) {
         return { success: false, message: 'Неверный формат файла' }
       }
-      cars.value = data.cars ?? []
+      // Validate car records have required fields with correct types
+      for (const c of data.cars) {
+        if (typeof c.id !== 'string' || typeof c.brand !== 'string' ||
+            typeof c.model !== 'string' || typeof c.year !== 'number' ||
+            typeof c.mileage !== 'number') {
+          return { success: false, message: 'Повреждённые данные автомобилей' }
+        }
+      }
+      // Validate fuel records
+      if (data.fuelRecords && !Array.isArray(data.fuelRecords)) {
+        return { success: false, message: 'Повреждённые данные заправок' }
+      }
+      for (const r of data.fuelRecords ?? []) {
+        if (typeof r.id !== 'string' || typeof r.liters !== 'number' ||
+            typeof r.mileage !== 'number' || typeof r.totalCost !== 'number') {
+          return { success: false, message: 'Повреждённые данные заправок' }
+        }
+      }
+      // Validate service records
+      for (const r of data.serviceRecords ?? []) {
+        if (typeof r.id !== 'string' || typeof r.cost !== 'number' ||
+            typeof r.mileage !== 'number') {
+          return { success: false, message: 'Повреждённые данные обслуживания' }
+        }
+      }
+      cars.value = data.cars
       fuelRecords.value = data.fuelRecords ?? []
       serviceRecords.value = data.serviceRecords ?? []
       expenses.value = data.expenses ?? []

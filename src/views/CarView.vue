@@ -55,7 +55,10 @@ const mileageError = ref('')
 function updateMileage() {
   mileageError.value = ''
   const m = parseInt(newMileage.value)
-  if (!m || !car.value) return
+  if (isNaN(m) || !car.value) {
+    mileageError.value = 'Введите корректный пробег'
+    return
+  }
   if (m <= car.value.mileage) {
     mileageError.value = `Пробег должен быть больше ${car.value.mileage.toLocaleString('ru')} км`
     return
