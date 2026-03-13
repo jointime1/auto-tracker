@@ -15,6 +15,24 @@ const car = store.getCarById(props.id)
 const fuelRecords = store.getFuelRecords(props.id)
 const serviceRecords = store.getServiceRecords(props.id)
 const expenses = store.getExpenses(props.id)
+const reminders = store.getReminders(props.id)
+
+const urgentReminders = computed(() => {
+  const now = new Date()
+  let count = 0
+  // Date-based
+  for (const r of reminders.value) {
+    const diff = Math.ceil((new Date(r.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    if (diff <= 14) count++
+  }
+  // Mileage-based
+  if (car.value) {
+    for (const s of serviceRecords.value) {
+      if (s.nextMileage && s.nextMileage - car.value.mileage <= 1000) count++
+    }
+  }
+  return count
+})
 
 // Redirect if car doesn't exist
 watchEffect(() => {
@@ -191,6 +209,30 @@ function deleteCar() {
           class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center hover:bg-blue-100 transition">
           <div class="text-2xl mb-1">💰</div>
           <div class="text-xs font-medium text-blue-700">Расход</div>
+        </router-link>
+      </div>
+
+      <!-- Feature links -->
+      <div class="grid grid-cols-2 gap-3">
+        <router-link :to="`/car/${id}/analytics`"
+          class="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex items-center gap-3 hover:bg-purple-100 transition">
+          <div class="text-2xl">📊</div>
+          <div>
+            <div class="text-sm font-medium text-purple-700">Аналитика</div>
+            <div class="text-xs text-purple-500">Графики и статистика</div>
+          </div>
+        </router-link>
+        <router-link :to="`/car/${id}/reminders`"
+          class="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-center gap-3 hover:bg-amber-100 transition relative">
+          <div class="text-2xl">🔔</div>
+          <div>
+            <div class="text-sm font-medium text-amber-700">Напоминания</div>
+            <div class="text-xs text-amber-500">Страховка, ТО, техосмотр</div>
+          </div>
+          <span v-if="urgentReminders > 0"
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            {{ urgentReminders }}
+          </span>
         </router-link>
       </div>
     </div>

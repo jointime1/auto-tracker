@@ -42,6 +42,16 @@ export interface Expense {
   notes?: string
 }
 
+export interface Reminder {
+  id: string
+  carId: string
+  type: 'insurance' | 'inspection' | 'custom'
+  title: string
+  dueDate: string
+  dueMileage?: number
+  notes?: string
+}
+
 export type ServiceType = 'oil_change' | 'tire' | 'brake' | 'filter' | 'inspection' | 'other'
 export type ExpenseCategory = 'insurance' | 'tax' | 'parking' | 'fine' | 'wash' | 'other'
 export type FuelType = 'АИ-92' | 'АИ-95' | 'АИ-98' | 'АИ-100' | 'ДТ' | 'Газ'
