@@ -32,7 +32,7 @@ function save() {
 <template>
   <div class="max-w-lg mx-auto px-4 py-8">
     <div class="flex items-center gap-3 mb-8">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
         </svg>
@@ -54,7 +54,7 @@ function save() {
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Год выпуска *</label>
-          <input v-model="year" type="number" min="1900" max="2030" placeholder="2020" required
+          <input v-model="year" type="number" min="1900" :max="new Date().getFullYear() + 1" placeholder="2020" required
             class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
         </div>
         <div>

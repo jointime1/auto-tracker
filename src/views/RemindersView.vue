@@ -120,7 +120,7 @@ const reminderTypes = [
 <template>
   <div class="max-w-2xl mx-auto px-4 py-8" v-if="car">
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
         </svg>

@@ -50,14 +50,27 @@ const editingExpense = ref<Expense | null>(null)
 // Mileage update
 const showMileageUpdate = ref(false)
 const newMileage = ref('')
+const mileageError = ref('')
 
 function updateMileage() {
+  mileageError.value = ''
   const m = parseInt(newMileage.value)
-  if (!m || !car.value || m <= car.value.mileage) return
+  if (!m || !car.value) return
+  if (m <= car.value.mileage) {
+    mileageError.value = `Пробег должен быть больше ${car.value.mileage.toLocaleString('ru')} км`
+    return
+  }
   store.updateCarMileage(props.id, m)
   showMileageUpdate.value = false
   newMileage.value = ''
 }
+
+// Distance since last fuel
+const distanceSinceLastFuel = computed(() => {
+  if (!car.value || fuelRecords.value.length === 0) return null
+  const sorted = [...fuelRecords.value].sort((a, b) => b.mileage - a.mileage)
+  return car.value.mileage - sorted[0].mileage
+})
 
 // Filtered records
 const filteredFuel = computed(() => {
@@ -218,13 +231,13 @@ function deleteCar() {
 
     <!-- Header -->
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.push('/')" class="p-2 hover:bg-gray-100 rounded-lg transition">
+      <button @click="router.push('/')" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
         </svg>
       </button>
-      <h1 class="text-2xl font-bold text-gray-900 flex-1">{{ car.brand }} {{ car.model }}</h1>
-      <button @click="deleteCar" class="p-2 hover:bg-red-50 rounded-lg transition text-red-500">
+      <h1 class="text-2xl font-bold text-gray-900 flex-1 truncate">{{ car.brand }} {{ car.model }}</h1>
+      <button @click="deleteCar" class="p-2 hover:bg-red-50 rounded-lg transition text-red-500 shrink-0" aria-label="Удалить автомобиль">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
         </svg>
@@ -263,27 +276,33 @@ function deleteCar() {
         <h2 class="text-xl font-bold text-gray-900">{{ car.brand }} {{ car.model }} {{ car.year }}</h2>
         <p v-if="car.licensePlate" class="text-gray-500 mt-1">{{ car.licensePlate }}</p>
         <p class="text-lg font-semibold text-gray-700 mt-2">
-          {{ car.mileage.toLocaleString('ru-RU') }} км
+          {{ car.mileage.toLocaleString('ru') }} км
         </p>
+        <div v-if="distanceSinceLastFuel !== null && distanceSinceLastFuel > 0" class="text-xs text-gray-400 mt-1">
+          {{ distanceSinceLastFuel.toLocaleString('ru') }} км с последней заправки
+        </div>
         <!-- Mileage update -->
         <div v-if="!showMileageUpdate" class="mt-2">
-          <button @click="showMileageUpdate = true; newMileage = ''"
+          <button @click="showMileageUpdate = true; newMileage = ''; mileageError = ''"
             class="text-xs text-blue-600 hover:text-blue-800">
             Обновить пробег
           </button>
         </div>
-        <div v-else class="mt-3 flex items-center gap-2 justify-center">
-          <input v-model="newMileage" type="number" :min="car.mileage + 1"
-            :placeholder="`> ${car.mileage}`"
-            class="w-36 px-3 py-2 rounded-lg border border-gray-200 text-sm text-center" />
-          <button @click="updateMileage"
-            class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-            OK
-          </button>
-          <button @click="showMileageUpdate = false"
-            class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition">
-            ✕
-          </button>
+        <div v-else class="mt-3">
+          <div class="flex items-center gap-2 justify-center">
+            <input v-model="newMileage" type="number" :min="car.mileage + 1"
+              :placeholder="`> ${car.mileage}`"
+              class="w-36 px-3 py-2 rounded-lg border border-gray-200 text-sm text-center" />
+            <button @click="updateMileage"
+              class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+              OK
+            </button>
+            <button @click="showMileageUpdate = false"
+              class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition">
+              ✕
+            </button>
+          </div>
+          <p v-if="mileageError" class="text-xs text-red-500 mt-1">{{ mileageError }}</p>
         </div>
       </div>
 
@@ -318,7 +337,7 @@ function deleteCar() {
           <p class="font-semibold text-amber-800">Следующее ТО</p>
           <p class="text-amber-700 text-sm">
             {{ SERVICE_TYPES[nextService.type] }} через
-            {{ (nextService.nextMileage! - car.mileage).toLocaleString('ru-RU') }} км
+            {{ (nextService.nextMileage! - car.mileage).toLocaleString('ru') }} км
           </p>
           <p v-if="serviceForecast" class="text-amber-600 text-xs mt-1">
             ~{{ serviceForecast.months > 0 ? serviceForecast.months + ' мес.' : serviceForecast.daysUntil + ' дн.' }}
@@ -421,7 +440,7 @@ function deleteCar() {
         <div class="flex-1 min-w-0">
           <div class="font-medium text-gray-900">{{ r.liters.toFixed(1) }} л · {{ r.fuelType }}</div>
           <div class="text-sm text-gray-500">
-            {{ formatDate(r.date) }} · {{ r.mileage.toLocaleString('ru-RU') }} км
+            {{ formatDate(r.date) }} · {{ r.mileage.toLocaleString('ru') }} км
             <template v-if="consumptionMap.get(r.id)">
               · {{ consumptionMap.get(r.id)!.toFixed(1) }} л/100км
             </template>
@@ -455,6 +474,12 @@ function deleteCar() {
         <input v-model="editingService.title" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="text-xs text-gray-500">Тип работ</label>
+            <select v-model="editingService.type" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
+              <option v-for="(label, key) in SERVICE_TYPES" :key="key" :value="key">{{ label }}</option>
+            </select>
+          </div>
+          <div>
             <label class="text-xs text-gray-500">Дата</label>
             <input v-model="editingService.date" type="date" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
           </div>
@@ -487,11 +512,11 @@ function deleteCar() {
         <div class="flex-1 min-w-0">
           <div class="font-medium text-gray-900">{{ r.title }}</div>
           <div class="text-sm text-gray-500">
-            {{ formatDate(r.date) }} · {{ r.mileage.toLocaleString('ru-RU') }} км
+            {{ formatDate(r.date) }} · {{ r.mileage.toLocaleString('ru') }} км
             · {{ SERVICE_TYPES[r.type] }}
           </div>
           <div v-if="r.nextMileage" class="text-xs text-amber-600 mt-0.5">
-            След. ТО: {{ r.nextMileage.toLocaleString('ru-RU') }} км
+            След. ТО: {{ r.nextMileage.toLocaleString('ru') }} км
           </div>
           <div v-if="r.notes" class="text-xs text-gray-400 mt-0.5">{{ r.notes }}</div>
         </div>

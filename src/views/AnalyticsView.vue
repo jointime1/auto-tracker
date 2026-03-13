@@ -158,6 +158,34 @@ const fuelPriceData = computed(() => {
   }
 })
 
+// Consumption trend
+const consumptionTrendData = computed(() => {
+  const sorted = [...fuelRecords.value].sort((a, b) => a.mileage - b.mileage)
+  const labels: string[] = []
+  const data: number[] = []
+  for (let i = 1; i < sorted.length; i++) {
+    const dist = sorted[i].mileage - sorted[i - 1].mileage
+    if (dist > 0) {
+      const consumption = (sorted[i].liters / dist) * 100
+      const [, m, d] = sorted[i].date.split('-')
+      labels.push(`${d}.${m}`)
+      data.push(parseFloat(consumption.toFixed(1)))
+    }
+  }
+  return {
+    labels,
+    datasets: [{
+      label: 'л/100км',
+      data,
+      borderColor: '#2563eb',
+      backgroundColor: 'rgba(37, 99, 235, 0.1)',
+      fill: true,
+      tension: 0.3,
+      pointBackgroundColor: '#2563eb',
+    }],
+  }
+})
+
 // Avg monthly spend
 const avgMonthlySpend = computed(() => {
   const months = monthlyData.value.filter(m => m.fuel + m.service + m.expense > 0)
@@ -232,7 +260,7 @@ const lineOptions = {
 <template>
   <div class="max-w-3xl mx-auto px-4 py-8" v-if="car">
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
         </svg>
@@ -324,6 +352,14 @@ const lineOptions = {
           <Line :data="fuelPriceData" :options="lineOptions" />
         </div>
         <p v-else class="text-gray-400 text-sm text-center py-10">Нужно минимум 2 заправки</p>
+      </div>
+    </div>
+
+    <!-- Consumption trend -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6" v-if="consumptionTrendData.labels.length >= 2">
+      <h3 class="font-semibold text-gray-900 mb-4">Динамика расхода топлива</h3>
+      <div class="h-56">
+        <Line :data="consumptionTrendData" :options="lineOptions" />
       </div>
     </div>
 

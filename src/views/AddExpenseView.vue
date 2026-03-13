@@ -14,9 +14,18 @@ const category = ref<ExpenseCategory>('insurance')
 const title = ref('')
 const cost = ref('')
 const notes = ref('')
+const error = ref('')
 
 function save() {
-  if (!title.value.trim() || !cost.value) return
+  error.value = ''
+  if (!title.value.trim()) {
+    error.value = 'Укажите описание'
+    return
+  }
+  if (!cost.value || parseFloat(cost.value) <= 0) {
+    error.value = 'Укажите сумму'
+    return
+  }
 
   store.addExpense({
     id: crypto.randomUUID(),
@@ -34,7 +43,7 @@ function save() {
 <template>
   <div class="max-w-lg mx-auto px-4 py-8">
     <div class="flex items-center gap-3 mb-8">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
         </svg>
@@ -43,6 +52,9 @@ function save() {
     </div>
 
     <form @submit.prevent="save" class="space-y-4">
+      <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+        {{ error }}
+      </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
         <input v-model="date" type="date" :max="today"
