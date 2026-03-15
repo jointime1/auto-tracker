@@ -6,6 +6,8 @@ import { useTelegram } from './composables/useTelegram'
 const router = useRouter()
 const { tg } = useTelegram()
 
+let unsubscribeRouter: (() => void) | null = null
+
 function goBack() {
   if (window.history.length > 1) {
     router.back()
@@ -19,7 +21,7 @@ onMounted(() => {
 
   tg.BackButton.onClick(goBack)
 
-  router.afterEach((to) => {
+  unsubscribeRouter = router.afterEach((to) => {
     if (to.path === '/') {
       tg.BackButton.hide()
     } else {
@@ -30,6 +32,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   tg?.BackButton.offClick(goBack)
+  unsubscribeRouter?.()
 })
 </script>
 

@@ -45,8 +45,13 @@ interface TelegramWebApp {
   setBackgroundColor(color: string): void
 }
 
+let cachedTg: TelegramWebApp | null | undefined
+
 function getTg(): TelegramWebApp | null {
-  return window.Telegram?.WebApp ?? null
+  if (cachedTg === undefined) {
+    cachedTg = window.Telegram?.WebApp ?? null
+  }
+  return cachedTg
 }
 
 export function useTelegram() {
@@ -54,14 +59,6 @@ export function useTelegram() {
 
   function haptic(type: 'success' | 'error' | 'warning') {
     tg?.HapticFeedback.notificationOccurred(type)
-  }
-
-  function hapticImpact(style: 'light' | 'medium' | 'heavy' = 'light') {
-    tg?.HapticFeedback.impactOccurred(style)
-  }
-
-  function hapticSelection() {
-    tg?.HapticFeedback.selectionChanged()
   }
 
   function confirm(message: string): Promise<boolean> {
@@ -74,24 +71,10 @@ export function useTelegram() {
     })
   }
 
-  function alert(message: string): Promise<void> {
-    return new Promise((resolve) => {
-      if (tg) {
-        tg.showAlert(message, resolve)
-      } else {
-        window.alert(message)
-        resolve()
-      }
-    })
-  }
-
   return {
     tg,
     haptic,
-    hapticImpact,
-    hapticSelection,
     confirm,
-    alert,
   }
 }
 
@@ -102,7 +85,6 @@ export function initTelegram() {
   tg.ready()
   tg.expand()
 
-  // Apply TG theme colors to CSS custom properties for Tailwind overrides
   document.documentElement.classList.add('tg-app')
   if (tg.colorScheme === 'dark') {
     document.documentElement.classList.add('dark')
