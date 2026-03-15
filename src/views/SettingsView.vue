@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCarsStore } from '../stores/cars'
+import { useTelegram } from '../composables/useTelegram'
 
-const router = useRouter()
 const store = useCarsStore()
+const { confirm: tgConfirm, haptic } = useTelegram()
 
 const importResult = ref<{ success: boolean; message: string } | null>(null)
 const showDangerZone = ref(false)
@@ -18,6 +18,7 @@ function exportData() {
   a.download = `autotracker-backup-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
+  haptic('success')
 }
 
 function triggerImport() {
@@ -29,20 +30,25 @@ function triggerImport() {
     if (!file) return
 
     if (store.cars.length > 0) {
-      if (!confirm('Импорт заменит все текущие данные. Продолжить?')) return
+      const ok = await tgConfirm('Импорт заменит все текущие данные. Продолжить?')
+      if (!ok) return
     }
 
     const text = await file.text()
     importResult.value = store.importData(text)
+    haptic(importResult.value.success ? 'success' : 'error')
   }
   input.click()
 }
 
-function clearAllData() {
-  if (!confirm('ВНИМАНИЕ: Все данные будут удалены безвозвратно. Продолжить?')) return
-  if (!confirm('Вы уверены? Это действие нельзя отменить.')) return
+async function clearAllData() {
+  const ok1 = await tgConfirm('ВНИМАНИЕ: Все данные будут удалены безвозвратно. Продолжить?')
+  if (!ok1) return
+  const ok2 = await tgConfirm('Вы уверены? Это действие нельзя отменить.')
+  if (!ok2) return
 
   localStorage.clear()
+  haptic('success')
   location.reload()
 }
 
@@ -66,11 +72,6 @@ const storageUsed = (() => {
 <template>
   <div class="max-w-lg mx-auto px-4 py-8">
     <div class="flex items-center gap-3 mb-8">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
-        </svg>
-      </button>
       <h1 class="text-2xl font-bold text-gray-900">Настройки</h1>
     </div>
 
@@ -111,7 +112,7 @@ const storageUsed = (() => {
     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
       <h3 class="font-semibold text-gray-900 mb-3">Бэкап данных</h3>
       <p class="text-sm text-gray-500 mb-4">
-        Данные хранятся в браузере. Экспортируйте для сохранности или переноса на другое устройство.
+        Экспортируйте данные для сохранности или переноса.
       </p>
       <div class="grid grid-cols-2 gap-3">
         <button @click="exportData"

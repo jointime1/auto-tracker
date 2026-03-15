@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCarsStore } from '../stores/cars'
 import { SERVICE_TYPES, EXPENSE_CATEGORIES, SERVICE_COLORS, EXPENSE_COLORS } from '../types'
 import { formatMoney } from '../utils'
@@ -15,7 +14,6 @@ import { ru } from 'date-fns/locale'
 ChartJS.register(ArcElement, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler)
 
 const props = defineProps<{ id: string }>()
-const router = useRouter()
 const store = useCarsStore()
 
 const car = store.getCarById(props.id)
@@ -260,11 +258,6 @@ const lineOptions = {
 <template>
   <div class="max-w-3xl mx-auto px-4 py-8" v-if="car">
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
-        </svg>
-      </button>
       <h1 class="text-2xl font-bold text-gray-900">Аналитика</h1>
       <span class="text-gray-400 text-sm">{{ car.brand }} {{ car.model }}</span>
     </div>

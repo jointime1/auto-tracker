@@ -1,5 +1,40 @@
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useTelegram } from './composables/useTelegram'
+
+const router = useRouter()
+const { tg } = useTelegram()
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
+
+onMounted(() => {
+  if (!tg) return
+
+  tg.BackButton.onClick(goBack)
+
+  router.afterEach((to) => {
+    if (to.path === '/') {
+      tg.BackButton.hide()
+    } else {
+      tg.BackButton.show()
+    }
+  })
+})
+
+onUnmounted(() => {
+  tg?.BackButton.offClick(goBack)
+})
+</script>
+
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+  <div class="min-h-screen bg-tg-bg transition-colors">
     <router-view />
   </div>
 </template>

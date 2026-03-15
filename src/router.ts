@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from './views/HomeView.vue'
 import CarView from './views/CarView.vue'
 import AddCarView from './views/AddCarView.vue'
@@ -10,7 +10,7 @@ import RemindersView from './views/RemindersView.vue'
 import SettingsView from './views/SettingsView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     { path: '/', component: HomeView },
     { path: '/settings', component: SettingsView },

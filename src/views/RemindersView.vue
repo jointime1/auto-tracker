@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCarsStore } from '../stores/cars'
 import { SERVICE_TYPES } from '../types'
 import { formatDate } from '../utils'
 import type { Reminder } from '../types'
+import { useTelegram } from '../composables/useTelegram'
 
 const props = defineProps<{ id: string }>()
-const router = useRouter()
 const store = useCarsStore()
+const { confirm: tgConfirm, haptic } = useTelegram()
 
 const car = store.getCarById(props.id)
 const reminders = store.getReminders(props.id)
@@ -90,6 +90,7 @@ function save() {
     notes: formNotes.value.trim() || undefined,
   })
 
+  haptic('success')
   showForm.value = false
   formTitle.value = ''
   formDate.value = ''
@@ -97,16 +98,20 @@ function save() {
   formNotes.value = ''
 }
 
-function dismissServiceReminder(serviceRecordId: string) {
+async function dismissServiceReminder(serviceRecordId: string) {
   const record = serviceRecords.value.find(r => r.id === serviceRecordId)
   if (!record) return
-  if (!confirm('Убрать напоминание о следующем ТО?')) return
+  const ok = await tgConfirm('Убрать напоминание о следующем ТО?')
+  if (!ok) return
   store.updateServiceRecord({ ...record, nextMileage: undefined })
+  haptic('success')
 }
 
-function confirmDelete(name: string, id: string) {
-  if (confirm(`Удалить напоминание "${name}"?`)) {
+async function confirmDeleteReminder(name: string, id: string) {
+  const ok = await tgConfirm(`Удалить напоминание "${name}"?`)
+  if (ok) {
     store.deleteReminder(id)
+    haptic('success')
   }
 }
 
@@ -120,11 +125,6 @@ const reminderTypes = [
 <template>
   <div class="max-w-2xl mx-auto px-4 py-8" v-if="car">
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
-        </svg>
-      </button>
       <h1 class="text-2xl font-bold text-gray-900 flex-1">Напоминания</h1>
       <span v-if="urgentCount > 0"
         class="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
@@ -227,7 +227,7 @@ const reminderTypes = [
             </div>
             <div v-if="r.notes" class="text-xs text-gray-400 mt-0.5">{{ r.notes }}</div>
           </div>
-          <button @click="confirmDelete(r.title, r.id)" class="text-red-400 hover:text-red-600 shrink-0">
+          <button @click="confirmDeleteReminder(r.title, r.id)" class="text-red-400 hover:text-red-600 shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
             </svg>

@@ -6,6 +6,7 @@ import { SERVICE_TYPES, EXPENSE_CATEGORIES, SERVICE_COLORS, EXPENSE_COLORS } fro
 import type { FuelRecord, ServiceRecord, Expense } from '../types'
 import ConsumptionChart from '../components/ConsumptionChart.vue'
 import { formatMoney, formatDate } from '../utils'
+import { useTelegram } from '../composables/useTelegram'
 
 type Tab = 'overview' | 'fuel' | 'service' | 'expenses'
 
@@ -13,6 +14,7 @@ const props = defineProps<{ id: string }>()
 const router = useRouter()
 const store = useCarsStore()
 const storageError = useStorageError()
+const { confirm: tgConfirm, haptic } = useTelegram()
 
 const car = store.getCarById(props.id)
 const fuelRecords = store.getFuelRecords(props.id)
@@ -64,6 +66,7 @@ function updateMileage() {
     return
   }
   store.updateCarMileage(props.id, m)
+  haptic('success')
   showMileageUpdate.value = false
   newMileage.value = ''
 }
@@ -191,6 +194,7 @@ function saveEditFuel() {
   const e = editingFuel.value
   e.totalCost = e.liters * e.pricePerLiter
   store.updateFuelRecord(e)
+  haptic('success')
   editingFuel.value = null
 }
 
@@ -201,6 +205,7 @@ function startEditService(r: ServiceRecord) {
 function saveEditService() {
   if (!editingService.value) return
   store.updateServiceRecord(editingService.value)
+  haptic('success')
   editingService.value = null
 }
 
@@ -211,16 +216,23 @@ function startEditExpense(r: Expense) {
 function saveEditExpense() {
   if (!editingExpense.value) return
   store.updateExpense(editingExpense.value)
+  haptic('success')
   editingExpense.value = null
 }
 
-function confirmDelete(name: string, action: () => void) {
-  if (confirm(`Удалить "${name}"?`)) action()
+async function confirmDelete(name: string, action: () => void) {
+  const ok = await tgConfirm(`Удалить "${name}"?`)
+  if (ok) {
+    action()
+    haptic('success')
+  }
 }
 
-function deleteCar() {
-  if (!confirm('Удалить автомобиль и все его данные?')) return
+async function deleteCar() {
+  const ok = await tgConfirm('Удалить автомобиль и все его данные?')
+  if (!ok) return
   store.deleteCar(props.id)
+  haptic('success')
   router.push('/')
 }
 </script>
@@ -234,11 +246,6 @@ function deleteCar() {
 
     <!-- Header -->
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.push('/')" class="p-2 hover:bg-gray-100 rounded-lg transition" aria-label="Назад">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
-        </svg>
-      </button>
       <h1 class="text-2xl font-bold text-gray-900 flex-1 truncate">{{ car.brand }} {{ car.model }}</h1>
       <button @click="deleteCar" class="p-2 hover:bg-red-50 rounded-lg transition text-red-500 shrink-0" aria-label="Удалить автомобиль">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
