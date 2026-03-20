@@ -246,6 +246,26 @@ export const useCarsStore = defineStore('cars', () => {
           return { success: false, message: 'Повреждённые данные обслуживания' }
         }
       }
+      // Validate expenses
+      if (data.expenses && !Array.isArray(data.expenses)) {
+        return { success: false, message: 'Повреждённые данные расходов' }
+      }
+      for (const r of data.expenses ?? []) {
+        if (typeof r.id !== 'string' || typeof r.cost !== 'number' ||
+            typeof r.title !== 'string') {
+          return { success: false, message: 'Повреждённые данные расходов' }
+        }
+      }
+      // Validate reminders
+      if (data.reminders && !Array.isArray(data.reminders)) {
+        return { success: false, message: 'Повреждённые данные напоминаний' }
+      }
+      for (const r of data.reminders ?? []) {
+        if (typeof r.id !== 'string' || typeof r.title !== 'string' ||
+            typeof r.dueDate !== 'string') {
+          return { success: false, message: 'Повреждённые данные напоминаний' }
+        }
+      }
       cars.value = data.cars
       fuelRecords.value = data.fuelRecords ?? []
       serviceRecords.value = data.serviceRecords ?? []

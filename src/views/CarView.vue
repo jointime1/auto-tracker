@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCarsStore, useStorageError } from '../stores/cars'
 import { SERVICE_TYPES, EXPENSE_CATEGORIES, SERVICE_COLORS, EXPENSE_COLORS } from '../types'
@@ -43,6 +43,8 @@ watchEffect(() => {
 
 const tab = ref<Tab>('overview')
 const searchQuery = ref('')
+
+watch(tab, () => { searchQuery.value = '' })
 
 // Editing state
 const editingFuel = ref<FuelRecord | null>(null)

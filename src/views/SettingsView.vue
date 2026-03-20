@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useCarsStore } from '../stores/cars'
 import { useTelegram } from '../composables/useTelegram'
 
@@ -47,26 +47,30 @@ async function clearAllData() {
   const ok2 = await tgConfirm('Вы уверены? Это действие нельзя отменить.')
   if (!ok2) return
 
-  localStorage.clear()
+  for (const key of APP_STORAGE_KEYS) {
+    localStorage.removeItem(key)
+  }
   haptic('success')
   location.reload()
 }
 
-const stats = {
+const APP_STORAGE_KEYS = ['cars', 'fuelRecords', 'serviceRecords', 'expenses', 'reminders']
+
+const stats = computed(() => ({
   cars: store.cars.length,
   fuel: store.fuelRecords.length,
   service: store.serviceRecords.length,
   expenses: store.expenses.length,
   reminders: store.reminders.length,
-}
+}))
 
-const storageUsed = (() => {
+const storageUsed = computed(() => {
   let total = 0
-  for (const key of ['cars', 'fuelRecords', 'serviceRecords', 'expenses', 'reminders']) {
+  for (const key of APP_STORAGE_KEYS) {
     total += (localStorage.getItem(key) || '').length
   }
   return (total / 1024).toFixed(1)
-})()
+})
 </script>
 
 <template>
